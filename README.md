@@ -1,11 +1,12 @@
-# ESP8266 Discord WebSocket Client
+# ESP Discord WebSocket Client
 
-|TODO Features|
-|-|
-|WS Heartbeat|
-|API Requests|
-|JSON Parsing|
-|Get Gateway URL from API|
+|Features|Status|
+|-|-|
+|Discord WebSocket gateway connect and receive|Working|
+|WS Heartbeat|To-do|
+|API Requests|To-do|
+|JSON Parsing|To-do|
+|Get Gateway URL from API|To-do|
 
 Implements a basic Discord WebSocket connection from https://discordapp.com/developers/docs/topics/gateway.
 
