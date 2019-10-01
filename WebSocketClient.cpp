@@ -189,6 +189,11 @@ int WebSocketClient::timedRead() {
 bool WebSocketClient::getMessage(String& message) {
 	if (!client->connected()) {	return false; }
 
+	if(!client->available())
+	{
+		return false;
+	}
+
 	// 1. read type and fin
 	unsigned int msgtype = timedRead();
 	if (!client->connected()) {

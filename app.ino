@@ -1,11 +1,16 @@
-#define DEBUG
-
-#include <Arduino.h>
 #include <HardwareSerial.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
-#include "WebSocketClient.h"
 #include <WiFiClientSecure.h>
+#include "WebSocketClient.h"
+#include "libs/ArduinoJson.h"
+
+#define DEBUG
+#ifdef DEBUG
+#define DEBUG_MSG Serial.println
+#else
+#define DEBUG_MSG(MSG)
+#endif
 
 #define wifi_ssid ""
 #define wifi_password ""
@@ -15,6 +20,19 @@ String bot_token = "";
 void setup_wifi();
 
 WebSocketClient ws(true);
+DynamicJsonDocument doc(1024);
+
+const char *host = "discordapp.com";
+const int httpsPort = 443;  //HTTPS= 443 and HTTP = 80
+
+unsigned long heartbeatInterval = 0;
+unsigned long lastHeartbeatAck = 0;
+unsigned long lastHeartbeatSend = 0;
+
+bool hasWsSession = false;
+String websocketSessionId;
+bool hasReceivedWSSequence = false;
+unsigned long lastWebsocketSequence = 0;
 
 void setup()
 {
@@ -42,8 +60,7 @@ void setup_wifi() {
     Serial.println("IP address: ");
     Serial.println(WiFi.localIP());
 }
-const char *host = "discordapp.com";
-const int httpsPort = 443;  //HTTPS= 443 and HTTP = 80
+
 void loop()
 {
     // Generic HTTPS client for sending messages at some point
@@ -94,24 +111,88 @@ void loop()
 
     // delay(2000);  //GET Data at every 2 seconds
 
-
     if (!ws.isConnected())
     {
         Serial.println("connecting");
         // It technically should fetch url from discordapp.com/api/gateway
         ws.connect("gateway.discord.gg", "https://gateway.discord.gg/", 443);
-    } else {
+    }
+    else
+    {
+        unsigned long now = millis();
+        if(heartbeatInterval > 0)
+        {
+            if(now > lastHeartbeatSend + heartbeatInterval)
+            {
+                if(hasReceivedWSSequence)
+                {
+                    DEBUG_MSG("Send:: {\"op\":1,\"d\":" + String(lastWebsocketSequence, 10) + "}");
+                    ws.send("{\"op\":1,\"d\":" + String(lastWebsocketSequence, 10) + "}");
+                }
+                else
+                {
+                    DEBUG_MSG("Send:: {\"op\":1,\"d\":null}");
+                    ws.send("{\"op\":1,\"d\":null}");
+                }
+                lastHeartbeatSend = now;
+            }
+            if(lastHeartbeatAck > lastHeartbeatSend + (heartbeatInterval / 2))
+            {
+                DEBUG_MSG("Heartbeat ack timeout");
+                ws.disconnect();
+                heartbeatInterval = 0;
+            }
+        }
+
         String msg;
         if (ws.getMessage(msg))
         {
             Serial.println(msg);
+            deserializeJson(doc, msg);
 
             // TODO Should maintain heartbeat
-            if(msg.indexOf("\"op\":10") != -1)
+            if(doc["op"] == 0) // Message
             {
-                ws.send("{\"op\":2,\"d\":{\"token\":\"" + bot_token + "\",\"properties\":{\"$os\":\"linux\",\"$browser\":\"ESP8266\",\"$device\":\"ESP8266\"},\"compress\":false,\"large_threshold\":250}}");
+                if(doc.containsKey("s"))
+                {
+                    lastWebsocketSequence = doc["s"];
+                    hasReceivedWSSequence = true;
+                }
+
+                if(doc["t"] == "READY")
+                {
+                    websocketSessionId = doc["d"]["session_id"].as<String>();
+                    hasWsSession = true;
+                }
+            }
+            else if(doc["op"] == 9) // Connection invalid
+            {
+                ws.disconnect();
+                hasWsSession = false;
+                heartbeatInterval = 0;
+            }
+            else if(doc["op"] == 11) // Heartbeat ACK
+            {
+                lastHeartbeatAck = now;
+            }
+            else if(doc["op"] == 10) // Start
+            {
+                heartbeatInterval = doc["d"]["heartbeat_interval"];
+
+                if(hasWsSession)
+                {
+                    DEBUG_MSG("Send:: {\"op\":6,\"d\":{\"token\":\"" + bot_token + "\",\"session_id\":\"" + websocketSessionId + "\",\"seq\":\"" + String(lastWebsocketSequence, 10) + "\"}}");
+                    ws.send("{\"op\":6,\"d\":{\"token\":\"" + bot_token + "\",\"session_id\":\"" + websocketSessionId + "\",\"seq\":\"" + String(lastWebsocketSequence, 10) + "\"}}");
+                }
+                else
+                {
+                    DEBUG_MSG("Send:: {\"op\":2,\"d\":{\"token\":\"" + bot_token + "\",\"properties\":{\"$os\":\"linux\",\"$browser\":\"ESP8266\",\"$device\":\"ESP8266\"},\"compress\":false,\"large_threshold\":250}}");
+                    ws.send("{\"op\":2,\"d\":{\"token\":\"" + bot_token + "\",\"properties\":{\"$os\":\"linux\",\"$browser\":\"ESP8266\",\"$device\":\"ESP8266\"},\"compress\":false,\"large_threshold\":250}}");
+                }
+
+                lastHeartbeatSend = now;
+                lastHeartbeatAck = now;
             }
         }
     }
-    delay(500);
 }
