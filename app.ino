@@ -34,9 +34,15 @@ String websocketSessionId;
 bool hasReceivedWSSequence = false;
 unsigned long lastWebsocketSequence = 0;
 
+static const char* USER_ID = "132691466177871872";
+static const uint8_t LED_PIN = 5;
+
 void setup()
 {
     Serial.begin(115200);
+
+    pinMode(LED_PIN, OUTPUT);
+    digitalWrite(LED_PIN, LOW);
 
     setup_wifi();
 }
@@ -163,6 +169,38 @@ void loop()
                 {
                     websocketSessionId = doc["d"]["session_id"].as<String>();
                     hasWsSession = true;
+                }
+                else if(doc["t"] == "GUILD_CREATE")
+                {
+                    for(JsonVariant v : doc["d"]["voice_states"].as<JsonArray>())
+                    {
+                        if(v["user_id"] == USER_ID)
+                        {
+                            if(v["self_mute"] || v["mute"])
+                            {
+                                digitalWrite(LED_PIN, HIGH);
+                            }
+                            else
+                            {
+                                digitalWrite(LED_PIN, LOW);
+                            }
+                            break;
+                        }
+                    }
+                }
+                else if(doc["t"] == "VOICE_STATE_UPDATE")
+                {
+                    if(doc["d"]["member"]["user"]["id"] == USER_ID)
+                    {
+                        if(doc["d"]["channel_id"] && (doc["d"]["self_mute"] || doc["d"]["mute"]))
+                        {
+                            digitalWrite(LED_PIN, HIGH);
+                        }
+                        else
+                        {
+                            digitalWrite(LED_PIN, LOW);
+                        }
+                    }
                 }
             }
             else if(doc["op"] == 9) // Connection invalid
