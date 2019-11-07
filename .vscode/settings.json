@@ -8,6 +8,15 @@
         "initializer_list": "cpp",
         "string_view": "cpp",
         "cstddef": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "bitset": "cpp",
+        "rope": "cpp",
+        "regex": "cpp",
+        "valarray": "cpp",
+        "random": "cpp",
+        "future": "cpp",
+        "memory": "cpp",
+        "optional": "cpp",
+        "*.tcc": "cpp"
     }
 }

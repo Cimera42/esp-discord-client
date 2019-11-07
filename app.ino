@@ -3,7 +3,9 @@
 #include <ESP8266HTTPClient.h>
 #include <WiFiClientSecure.h>
 #include "WebSocketClient.h"
-#include "libs/ArduinoJson.h"
+
+#include "JsonStreamingParser.h"
+#include "DiscordJsonListener.h"
 
 #define DEBUG
 #ifdef DEBUG
@@ -20,10 +22,11 @@ String bot_token = "";
 void setup_wifi();
 
 WebSocketClient ws(true);
-DynamicJsonDocument doc(1024);
+JsonStreamingParser parser;
+DiscordJsonListener listener;
 
 const char *host = "discordapp.com";
-const int httpsPort = 443;  //HTTPS= 443 and HTTP = 80
+const int httpsPort = 443; //HTTPS= 443 and HTTP = 80
 
 unsigned long heartbeatInterval = 0;
 unsigned long lastHeartbeatAck = 0;
@@ -34,7 +37,7 @@ String websocketSessionId;
 bool hasReceivedWSSequence = false;
 unsigned long lastWebsocketSequence = 0;
 
-static const char* USER_ID = "132691466177871872";
+static const char *USER_ID = "132691466177871872";
 static const uint8_t LED_PIN = 5;
 
 void setup()
@@ -45,9 +48,13 @@ void setup()
     digitalWrite(LED_PIN, LOW);
 
     setup_wifi();
+
+    parser.setListener(&listener);
+    listener.userIdToFind = USER_ID;
 }
 
-void setup_wifi() {
+void setup_wifi()
+{
     delay(10);
     // We start by connecting to a WiFi network
     Serial.println();
@@ -56,7 +63,8 @@ void setup_wifi() {
 
     WiFi.begin(wifi_ssid, wifi_password);
 
-    while (WiFi.status() != WL_CONNECTED) {
+    while (WiFi.status() != WL_CONNECTED)
+    {
         delay(500);
         Serial.print(".");
     }
@@ -126,11 +134,11 @@ void loop()
     else
     {
         unsigned long now = millis();
-        if(heartbeatInterval > 0)
+        if (heartbeatInterval > 0)
         {
-            if(now > lastHeartbeatSend + heartbeatInterval)
+            if (now > lastHeartbeatSend + heartbeatInterval)
             {
-                if(hasReceivedWSSequence)
+                if (hasReceivedWSSequence)
                 {
                     DEBUG_MSG("Send:: {\"op\":1,\"d\":" + String(lastWebsocketSequence, 10) + "}");
                     ws.send("{\"op\":1,\"d\":" + String(lastWebsocketSequence, 10) + "}");
@@ -142,7 +150,7 @@ void loop()
                 }
                 lastHeartbeatSend = now;
             }
-            if(lastHeartbeatAck > lastHeartbeatSend + (heartbeatInterval / 2))
+            if (lastHeartbeatAck > lastHeartbeatSend + (heartbeatInterval / 2))
             {
                 DEBUG_MSG("Heartbeat ack timeout");
                 ws.disconnect();
@@ -153,46 +161,40 @@ void loop()
         String msg;
         if (ws.getMessage(msg))
         {
-            Serial.println(msg);
-            deserializeJson(doc, msg);
-
-            // TODO Should maintain heartbeat
-            if(doc["op"] == 0) // Message
+            DEBUG_MSG(msg);
+            listener.reset();
+            for (auto c : msg)
             {
-                if(doc.containsKey("s"))
+                parser.parse(c);
+            }
+            parser.reset();
+
+            if (listener.opCode == "0")
+            {
+                if (listener.s != "")
                 {
-                    lastWebsocketSequence = doc["s"];
+                    lastWebsocketSequence = listener.s.toInt();
                     hasReceivedWSSequence = true;
                 }
 
-                if(doc["t"] == "READY")
+                if (listener.t == "READY")
                 {
-                    websocketSessionId = doc["d"]["session_id"].as<String>();
+                    websocketSessionId = listener.sessionId;
                     hasWsSession = true;
                 }
-                else if(doc["t"] == "GUILD_CREATE")
+                else if (listener.t == "GUILD_CREATE")
                 {
-                    for(JsonVariant v : doc["d"]["voice_states"].as<JsonArray>())
+                    if (listener.mute == "true" || listener.selfMute == "true" || listener.suppress == "true")
                     {
-                        if(v["user_id"] == USER_ID)
-                        {
-                            if(v["self_mute"] || v["mute"])
-                            {
-                                digitalWrite(LED_PIN, HIGH);
-                            }
-                            else
-                            {
-                                digitalWrite(LED_PIN, LOW);
-                            }
-                            break;
-                        }
+                        digitalWrite(LED_PIN, HIGH);
                     }
+                    // Don't need to go LOW if not muted, as another server/guild may have muted already
                 }
-                else if(doc["t"] == "VOICE_STATE_UPDATE")
+                else if (listener.t == "VOICE_STATE_UPDATE")
                 {
-                    if(doc["d"]["member"]["user"]["id"] == USER_ID)
+                    if (listener.voiceUserId == USER_ID)
                     {
-                        if(doc["d"]["channel_id"] && (doc["d"]["self_mute"] || doc["d"]["mute"]))
+                        if (listener.channelId != "null" && (listener.mute == "true" || listener.selfMute == "true" || listener.suppress == "true"))
                         {
                             digitalWrite(LED_PIN, HIGH);
                         }
@@ -203,21 +205,21 @@ void loop()
                     }
                 }
             }
-            else if(doc["op"] == 9) // Connection invalid
+            else if (listener.opCode == "9") // Connection invalid
             {
                 ws.disconnect();
                 hasWsSession = false;
                 heartbeatInterval = 0;
             }
-            else if(doc["op"] == 11) // Heartbeat ACK
+            else if (listener.opCode == "11") // Heartbeat ACKs
             {
                 lastHeartbeatAck = now;
             }
-            else if(doc["op"] == 10) // Start
+            else if (listener.opCode == "10")
             {
-                heartbeatInterval = doc["d"]["heartbeat_interval"];
+                heartbeatInterval = listener.heartbeatInterval.toInt();
 
-                if(hasWsSession)
+                if (hasWsSession)
                 {
                     DEBUG_MSG("Send:: {\"op\":6,\"d\":{\"token\":\"" + bot_token + "\",\"session_id\":\"" + websocketSessionId + "\",\"seq\":\"" + String(lastWebsocketSequence, 10) + "\"}}");
                     ws.send("{\"op\":6,\"d\":{\"token\":\"" + bot_token + "\",\"session_id\":\"" + websocketSessionId + "\",\"seq\":\"" + String(lastWebsocketSequence, 10) + "\"}}");
