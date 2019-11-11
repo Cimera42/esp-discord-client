@@ -126,6 +126,7 @@ void DiscordJsonListener::value(String value)
 
         case D_VOICESTATES_USERID: {
             if(value == userIdToFind) {
+                userIdFound = true;
                 state = D_VOICESTATES_FOUNDUSER;
             } else {
                 state = D;
@@ -189,4 +190,6 @@ void DiscordJsonListener::reset()
     mute = "";
     selfMute = "";
     suppress = "";
+
+    userIdFound = false;
 }

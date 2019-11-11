@@ -38,14 +38,18 @@ bool hasReceivedWSSequence = false;
 unsigned long lastWebsocketSequence = 0;
 
 static const char *USER_ID = "132691466177871872";
-static const uint8_t LED_PIN = 5;
+static const uint8_t ACTIVE_LED_PIN = 4;
+static const uint8_t MUTE_LED_PIN = 5;
 
 void setup()
 {
     Serial.begin(115200);
 
-    pinMode(LED_PIN, OUTPUT);
-    digitalWrite(LED_PIN, LOW);
+    pinMode(ACTIVE_LED_PIN, OUTPUT);
+    digitalWrite(ACTIVE_LED_PIN, LOW);
+
+    pinMode(MUTE_LED_PIN, OUTPUT);
+    digitalWrite(MUTE_LED_PIN, LOW);
 
     setup_wifi();
 
@@ -184,9 +188,13 @@ void loop()
                 }
                 else if (listener.t == "GUILD_CREATE")
                 {
+                    if (listener.userIdFound)
+                    {
+                        digitalWrite(ACTIVE_LED_PIN, HIGH);
+                    }
                     if (listener.mute == "true" || listener.selfMute == "true" || listener.suppress == "true")
                     {
-                        digitalWrite(LED_PIN, HIGH);
+                        digitalWrite(MUTE_LED_PIN, HIGH);
                     }
                     // Don't need to go LOW if not muted, as another server/guild may have muted already
                 }
@@ -194,13 +202,22 @@ void loop()
                 {
                     if (listener.voiceUserId == USER_ID)
                     {
-                        if (listener.channelId != "null" && (listener.mute == "true" || listener.selfMute == "true" || listener.suppress == "true"))
+                        if (listener.channelId != "null")
                         {
-                            digitalWrite(LED_PIN, HIGH);
+                            digitalWrite(ACTIVE_LED_PIN, HIGH);
+                            if (listener.mute == "true" || listener.selfMute == "true" || listener.suppress == "true")
+                            {
+                                digitalWrite(MUTE_LED_PIN, HIGH);
+                            }
+                            else
+                            {
+                                digitalWrite(MUTE_LED_PIN, LOW);
+                            }
                         }
                         else
                         {
-                            digitalWrite(LED_PIN, LOW);
+                            digitalWrite(ACTIVE_LED_PIN, LOW);
+                            digitalWrite(MUTE_LED_PIN, LOW);
                         }
                     }
                 }

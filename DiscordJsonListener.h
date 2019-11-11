@@ -69,4 +69,5 @@ public:
     String suppress;
 
     String userIdToFind;
+    bool userIdFound;
 };
