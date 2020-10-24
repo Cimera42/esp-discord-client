@@ -22,7 +22,7 @@ void setup_wifi();
 WebSocketClient ws(true);
 DynamicJsonDocument doc(1024);
 
-const char *host = "discordapp.com";
+const char *host = "discord.com";
 const int httpsPort = 443;  //HTTPS= 443 and HTTP = 80
 
 unsigned long heartbeatInterval = 0;
@@ -83,7 +83,7 @@ void loop()
     // {
     //     Serial.println("Connected to web");
     // }
-    // httpsClient.print(String("GET ") + "https://discordapp.com/api/gateway" + " HTTP/1.1\r\n" +
+    // httpsClient.print(String("GET ") + "https://discord.com/api/gateway" + " HTTP/1.1\r\n" +
     //             "Host: " + host + "\r\n" +
     //             "Authorization: " + bot_token + "\r\n" +
     //             "Connection: close\r\n\r\n");
@@ -114,7 +114,7 @@ void loop()
     if (!ws.isConnected())
     {
         Serial.println("connecting");
-        // It technically should fetch url from discordapp.com/api/gateway
+        // It technically should fetch url from discord.com/api/gateway
         ws.connect("gateway.discord.gg", "https://gateway.discord.gg/", 443);
     }
     else
