@@ -1,6 +1,6 @@
 # ESP Discord WebSocket Client
 
-Implements a basic Discord WebSocket client as documented at https://discordapp.com/developers/docs/topics/gateway.
+Implements a basic Discord WebSocket client as documented at https://discord.com/developers/docs/topics/gateway.
 
 |Features|Status|
 |-|-|
@@ -14,7 +14,17 @@ Implements a basic Discord WebSocket client as documented at https://discordapp.
 
 1. Install ESP board for Arduino as outlined on the [official documentation](https://arduino-esp8266.readthedocs.io/en/latest/installing.html)
 
-1. Build and upload to ESP board
+2. Set configuration at the top of `app.ino`.
+
+    |Name|Value|
+    |-|-|
+    |`wifi_ssid`|SSID of the wifi to connect to|
+    |`wifi_password`|Password for the wifi to connect to|
+    |`bot_token`|Token to authenticate websocket connection<br/>Discord bots can be created and tokens generated at the [Developer Documentation](https://discord.com/developers/applications).|
+    |`gateway_intents`|Data to be sent over websocket connection<br/>Options can be found in [`GatewayIntents.h`](./GatewayIntents.h)<br/>  - Bitwise OR (`\|`) for multiple.<br/>More info can be found at: https://discord.com/developers/docs/topics/gateway#gateway-intents|
+
+
+3. Build and upload to ESP board
 
 - If there are any problems, feel free to create an [issue on GitHub](https://github.com/Cimera42/esp-discord-client/issues)
 

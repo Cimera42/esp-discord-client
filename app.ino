@@ -2,6 +2,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <WiFiClientSecure.h>
+#include "GatewayIntents.h"
 #include "WebSocketClient.h"
 #include "libs/ArduinoJson.h"
 
@@ -12,10 +13,18 @@
 #define DEBUG_MSG(MSG)
 #endif
 
+/**
+ * CONFIG
+ */
 #define wifi_ssid ""
 #define wifi_password ""
 
-String bot_token = "";
+const String bot_token = "";
+// Intent options can be found in GatewayIntents.h
+const uint16_t gateway_intents = GUILD_MESSAGES_INTENT | GUILD_MESSAGE_TYPING_INTENT;
+/**
+ * END CONFIG
+ */
 
 void setup_wifi();
 
@@ -115,7 +124,7 @@ void loop()
     {
         Serial.println("connecting");
         // It technically should fetch url from discord.com/api/gateway
-        ws.connect("gateway.discord.gg", "https://gateway.discord.gg/?v=6&encoding=json", 443);
+        ws.connect("gateway.discord.gg", "/?v=8&encoding=json", 443);
     }
     else
     {
@@ -186,8 +195,8 @@ void loop()
                 }
                 else
                 {
-                    DEBUG_MSG("Send:: {\"op\":2,\"d\":{\"token\":\"" + bot_token + "\",\"properties\":{\"$os\":\"linux\",\"$browser\":\"ESP8266\",\"$device\":\"ESP8266\"},\"compress\":false,\"large_threshold\":250}}");
-                    ws.send("{\"op\":2,\"d\":{\"token\":\"" + bot_token + "\",\"properties\":{\"$os\":\"linux\",\"$browser\":\"ESP8266\",\"$device\":\"ESP8266\"},\"compress\":false,\"large_threshold\":250}}");
+                    DEBUG_MSG("Send:: {\"op\":2,\"d\":{\"token\":\"" + bot_token + "\",\"intents\":" + gateway_intents + ",\"properties\":{\"$os\":\"linux\",\"$browser\":\"ESP8266\",\"$device\":\"ESP8266\"},\"compress\":false,\"large_threshold\":250}}");
+                    ws.send("{\"op\":2,\"d\":{\"token\":\"" + bot_token + "\",\"intents\":" + gateway_intents + ",\"properties\":{\"$os\":\"linux\",\"$browser\":\"ESP8266\",\"$device\":\"ESP8266\"},\"compress\":false,\"large_threshold\":250}}");
                 }
 
                 lastHeartbeatSend = now;
