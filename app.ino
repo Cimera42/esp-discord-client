@@ -115,7 +115,7 @@ void loop()
     {
         Serial.println("connecting");
         // It technically should fetch url from discord.com/api/gateway
-        ws.connect("gateway.discord.gg", "https://gateway.discord.gg/", 443);
+        ws.connect("gateway.discord.gg", "https://gateway.discord.gg/?v=6&encoding=json", 443);
     }
     else
     {
