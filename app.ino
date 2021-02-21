@@ -20,6 +20,7 @@
 #define wifi_password ""
 
 const String bot_token = "";
+// Intent options can be found in GatewayIntents.h
 const uint16_t gateway_intents = GUILD_MESSAGES_INTENT | GUILD_MESSAGE_TYPING_INTENT;
 /**
  * END CONFIG
