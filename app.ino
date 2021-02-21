@@ -25,8 +25,8 @@ WebSocketClient ws(true);
 JsonStreamingParser parser;
 DiscordJsonListener listener;
 
-const char *host = "discordapp.com";
-const int httpsPort = 443; //HTTPS= 443 and HTTP = 80
+const char *host = "discord.com";
+const int httpsPort = 443;  //HTTPS= 443 and HTTP = 80
 
 unsigned long heartbeatInterval = 0;
 unsigned long lastHeartbeatAck = 0;
@@ -101,7 +101,7 @@ void loop()
     // {
     //     Serial.println("Connected to web");
     // }
-    // httpsClient.print(String("GET ") + "https://discordapp.com/api/gateway" + " HTTP/1.1\r\n" +
+    // httpsClient.print(String("GET ") + "https://discord.com/api/gateway" + " HTTP/1.1\r\n" +
     //             "Host: " + host + "\r\n" +
     //             "Authorization: " + bot_token + "\r\n" +
     //             "Connection: close\r\n\r\n");
@@ -132,8 +132,8 @@ void loop()
     if (!ws.isConnected())
     {
         Serial.println("connecting");
-        // It technically should fetch url from discordapp.com/api/gateway
-        ws.connect("gateway.discord.gg", "https://gateway.discord.gg/", 443);
+        // It technically should fetch url from discord.com/api/gateway
+        ws.connect("gateway.discord.gg", "https://gateway.discord.gg/?v=6&encoding=json", 443);
     }
     else
     {
