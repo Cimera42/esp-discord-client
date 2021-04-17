@@ -30,6 +30,14 @@ See the [`mute_led`](https://github.com/Cimera42/esp-discord-client/tree/mute_le
 
 - If there are any problems, feel free to create an [issue on GitHub](https://github.com/Cimera42/esp-discord-client/issues)
 
+## Potential Issues
+
+Here's some common problems which may be preventing the client from working properly.
+
+### Large servers
+
+Due to the limited memory of the ESP8266, some websocket messages may be too large and crash the program. For this reason, it is not recommended to use the `GUILDS_INTENT` intent, as it includes a message of the full state of the bot's guilds when connecting the websocket client.
+
 ## Used Libraries:
 ### [esp8266-websocketclient](https://github.com/hellerchr/esp8266-websocketclient)
 Some custom modifications:
