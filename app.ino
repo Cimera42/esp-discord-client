@@ -21,7 +21,7 @@
 
 const String bot_token = "";
 // Intent options can be found in GatewayIntents.h
-const uint16_t gateway_intents = GUILD_MESSAGES_INTENT | GUILD_MESSAGE_TYPING_INTENT;
+const uint16_t gateway_intents = GUILD_MESSAGES_INTENT | GUILD_MESSAGE_TYPING_INTENT | GUILD_VOICE_STATES_INTENT;
 /**
  * END CONFIG
  */
