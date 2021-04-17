@@ -10,6 +10,8 @@ Implements a basic Discord WebSocket client as documented at https://discord.com
 |API Requests|To-do|
 |Get Gateway URL from API|To-do|
 
+See the [`mute_led`](https://github.com/Cimera42/esp-discord-client/tree/mute_led) branch for an example application which turns on an LED when the specified user is muted in a voice channel.
+
 ## Installation
 
 1. Install ESP board for Arduino as outlined on the [official documentation](https://arduino-esp8266.readthedocs.io/en/latest/installing.html)
