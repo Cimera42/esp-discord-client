@@ -22,6 +22,9 @@
 const String bot_token = "";
 // Intent options can be found in GatewayIntents.h
 const uint16_t gateway_intents = GUILD_MESSAGES_INTENT | GUILD_MESSAGE_TYPING_INTENT | GUILD_VOICE_STATES_INTENT;
+
+static const char* USER_ID = "132691466177871872";
+static const uint8_t LED_PIN = 5;
 /**
  * END CONFIG
  */
@@ -43,8 +46,6 @@ String websocketSessionId;
 bool hasReceivedWSSequence = false;
 unsigned long lastWebsocketSequence = 0;
 
-static const char* USER_ID = "132691466177871872";
-static const uint8_t LED_PIN = 5;
 
 void setup()
 {
