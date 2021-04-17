@@ -2,6 +2,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <WiFiClientSecure.h>
+#include "GatewayIntents.h"
 #include "WebSocketClient.h"
 #include "libs/ArduinoJson.h"
 
@@ -12,17 +13,25 @@
 #define DEBUG_MSG(MSG)
 #endif
 
+/**
+ * CONFIG
+ */
 #define wifi_ssid ""
 #define wifi_password ""
 
-String bot_token = "";
+const String bot_token = "";
+// Intent options can be found in GatewayIntents.h
+const uint16_t gateway_intents = GUILD_MESSAGES_INTENT | GUILD_MESSAGE_TYPING_INTENT;
+/**
+ * END CONFIG
+ */
 
 void setup_wifi();
 
 WebSocketClient ws(true);
 DynamicJsonDocument doc(1024);
 
-const char *host = "discordapp.com";
+const char *host = "discord.com";
 const int httpsPort = 443;  //HTTPS= 443 and HTTP = 80
 
 unsigned long heartbeatInterval = 0;
@@ -89,7 +98,7 @@ void loop()
     // {
     //     Serial.println("Connected to web");
     // }
-    // httpsClient.print(String("GET ") + "https://discordapp.com/api/gateway" + " HTTP/1.1\r\n" +
+    // httpsClient.print(String("GET ") + "https://discord.com/api/gateway" + " HTTP/1.1\r\n" +
     //             "Host: " + host + "\r\n" +
     //             "Authorization: " + bot_token + "\r\n" +
     //             "Connection: close\r\n\r\n");
@@ -120,8 +129,8 @@ void loop()
     if (!ws.isConnected())
     {
         Serial.println("connecting");
-        // It technically should fetch url from discordapp.com/api/gateway
-        ws.connect("gateway.discord.gg", "https://gateway.discord.gg/", 443);
+        // It technically should fetch url from discord.com/api/gateway
+        ws.connect("gateway.discord.gg", "/?v=8&encoding=json", 443);
     }
     else
     {
@@ -224,8 +233,8 @@ void loop()
                 }
                 else
                 {
-                    DEBUG_MSG("Send:: {\"op\":2,\"d\":{\"token\":\"" + bot_token + "\",\"properties\":{\"$os\":\"linux\",\"$browser\":\"ESP8266\",\"$device\":\"ESP8266\"},\"compress\":false,\"large_threshold\":250}}");
-                    ws.send("{\"op\":2,\"d\":{\"token\":\"" + bot_token + "\",\"properties\":{\"$os\":\"linux\",\"$browser\":\"ESP8266\",\"$device\":\"ESP8266\"},\"compress\":false,\"large_threshold\":250}}");
+                    DEBUG_MSG("Send:: {\"op\":2,\"d\":{\"token\":\"" + bot_token + "\",\"intents\":" + gateway_intents + ",\"properties\":{\"$os\":\"linux\",\"$browser\":\"ESP8266\",\"$device\":\"ESP8266\"},\"compress\":false,\"large_threshold\":250}}");
+                    ws.send("{\"op\":2,\"d\":{\"token\":\"" + bot_token + "\",\"intents\":" + gateway_intents + ",\"properties\":{\"$os\":\"linux\",\"$browser\":\"ESP8266\",\"$device\":\"ESP8266\"},\"compress\":false,\"large_threshold\":250}}");
                 }
 
                 lastHeartbeatSend = now;
