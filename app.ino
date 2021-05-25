@@ -1,15 +1,15 @@
+#include "config.h"
+
 #include <HardwareSerial.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <WiFiClientSecure.h>
-#include "GatewayIntents.h"
 #include "WebSocketClient.h"
 #include "libs/ArduinoJson.h"
 
-#include "config.h"
 
-#define DEBUG
-#ifdef DEBUG
+#define DEBUG_APP
+#ifdef DEBUG_APP
 #define DEBUG_MSG Serial.println
 #else
 #define DEBUG_MSG(MSG)
@@ -112,6 +112,7 @@ void loop()
     if (!ws.isConnected())
     {
         Serial.println("connecting");
+        ws.setSecureFingerprint(certificateFingerprint);
         // It technically should fetch url from discord.com/api/gateway
         ws.connect("gateway.discord.gg", "/?v=8&encoding=json", 443);
     }
