@@ -22,16 +22,20 @@ public:
 
 	void setAuthorizationHeader(String header);
 
+	void setSecureFingerprint(const char * fpStr);
+
 private:
 	int timedRead();
 
     void write(uint8_t data);
-    
+
     void write(const char *str);
 
 	String generateKey();
 
 	WiFiClient *client;
+
+	bool secure;
 
 	String authorizationHeader = "";
 
