@@ -16,17 +16,19 @@ See the [`mute_led`](https://github.com/Cimera42/esp-discord-client/tree/mute_le
 
 1. Install ESP board for Arduino as outlined on the [official documentation](https://arduino-esp8266.readthedocs.io/en/latest/installing.html)
 
-2. Set configuration at the top of `app.ino`.
+2. Copy `privateConfig.template.h` and rename to `privateConfig.h`.
 
-    |Name|Value|
-    |-|-|
-    |`wifi_ssid`|SSID of the wifi to connect to|
-    |`wifi_password`|Password for the wifi to connect to|
-    |`bot_token`|Token to authenticate websocket connection<br/>Discord bots can be created and tokens generated at the [Developer Documentation](https://discord.com/developers/applications).|
-    |`gateway_intents`|Data to be sent over websocket connection<br/>Options can be found in [`GatewayIntents.h`](./GatewayIntents.h)<br/>  - Bitwise OR (`\|`) for multiple.<br/>More info can be found at: https://discord.com/developers/docs/topics/gateway#gateway-intents|
+3. Set configuration in `config.h` and `privateConfig.h`.
+
+    |Name|Value|Location|
+    |-|-|-|
+    |`wifi_ssid`|SSID of the wifi to connect to|`privateConfig.h`|
+    |`wifi_password`|Password for the wifi to connect to|`privateConfig.h`|
+    |`bot_token`|Token to authenticate websocket connection<br/>Discord bots can be created and tokens generated at the [Developer Documentation](https://discord.com/developers/applications).|`privateConfig.h`|
+    |`gateway_intents`|Data to be sent over websocket connection<br/>Options can be found in [`GatewayIntents.h`](./GatewayIntents.h)<br/>  - Bitwise OR (`\|`) for multiple.<br/>More info can be found at: https://discord.com/developers/docs/topics/gateway#gateway-intents|`config.h`|
 
 
-3. Build and upload to ESP board
+4. Build and upload to ESP board
 
 - If there are any problems, feel free to create an [issue on GitHub](https://github.com/Cimera42/esp-discord-client/issues)
 

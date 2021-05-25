@@ -6,25 +6,14 @@
 #include "WebSocketClient.h"
 #include "libs/ArduinoJson.h"
 
+#include "config.h"
+
 #define DEBUG
 #ifdef DEBUG
 #define DEBUG_MSG Serial.println
 #else
 #define DEBUG_MSG(MSG)
 #endif
-
-/**
- * CONFIG
- */
-#define wifi_ssid ""
-#define wifi_password ""
-
-const String bot_token = "";
-// Intent options can be found in GatewayIntents.h
-const uint16_t gateway_intents = GUILD_MESSAGES_INTENT | GUILD_MESSAGE_TYPING_INTENT;
-/**
- * END CONFIG
- */
 
 void setup_wifi();
 
@@ -190,13 +179,15 @@ void loop()
 
                 if(hasWsSession)
                 {
-                    DEBUG_MSG("Send:: {\"op\":6,\"d\":{\"token\":\"" + bot_token + "\",\"session_id\":\"" + websocketSessionId + "\",\"seq\":\"" + String(lastWebsocketSequence, 10) + "\"}}");
-                    ws.send("{\"op\":6,\"d\":{\"token\":\"" + bot_token + "\",\"session_id\":\"" + websocketSessionId + "\",\"seq\":\"" + String(lastWebsocketSequence, 10) + "\"}}");
+                    String msg = "{\"op\":6,\"d\":{\"token\":\"" + String(bot_token) + "\",\"session_id\":\"" + websocketSessionId + "\",\"seq\":\"" + String(lastWebsocketSequence, 10) + "\"}}";
+                    DEBUG_MSG("Send:: " + msg);
+                    ws.send(msg);
                 }
                 else
                 {
-                    DEBUG_MSG("Send:: {\"op\":2,\"d\":{\"token\":\"" + bot_token + "\",\"intents\":" + gateway_intents + ",\"properties\":{\"$os\":\"linux\",\"$browser\":\"ESP8266\",\"$device\":\"ESP8266\"},\"compress\":false,\"large_threshold\":250}}");
-                    ws.send("{\"op\":2,\"d\":{\"token\":\"" + bot_token + "\",\"intents\":" + gateway_intents + ",\"properties\":{\"$os\":\"linux\",\"$browser\":\"ESP8266\",\"$device\":\"ESP8266\"},\"compress\":false,\"large_threshold\":250}}");
+                    String msg = "{\"op\":2,\"d\":{\"token\":\"" + String(bot_token) + "\",\"intents\":" + gateway_intents + ",\"properties\":{\"$os\":\"linux\",\"$browser\":\"ESP8266\",\"$device\":\"ESP8266\"},\"compress\":false,\"large_threshold\":250}}";
+                    DEBUG_MSG("Send:: " + msg);
+                    ws.send(msg);
                 }
 
                 lastHeartbeatSend = now;
