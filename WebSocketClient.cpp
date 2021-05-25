@@ -10,17 +10,23 @@
 #define WS_MASK           0x80
 #define WS_SIZE16         126
 
-// #ifdef DEBUG
+#define DEBUGWS
+#ifdef DEBUGWS
 #define DEBUG_WS Serial.println
-// #else
-// #define DEBUG_WS(MSG)
-// #endif
+#else
+#define DEBUG_WS(MSG)
+#endif
 
 WebSocketClient::WebSocketClient(bool secure) {
+	this->secure = secure;
 	if (secure)
+	{
 		this->client = new WiFiClientSecure;
+	}
 	else
+	{
 		this->client = new WiFiClient;
+	}
 }
 
 WebSocketClient::~WebSocketClient() {
@@ -29,6 +35,17 @@ WebSocketClient::~WebSocketClient() {
 
 void WebSocketClient::setAuthorizationHeader(String header) {
 	this->authorizationHeader = header;
+}
+
+void WebSocketClient::setSecureFingerprint(const char * fpStr) {
+	if(this->secure)
+	{
+		((WiFiClientSecure*) this->client)->setFingerprint(fpStr);
+	}
+	else
+	{
+		DEBUG_WS("[WS] Trying to set certificate fingerprint on insecure connection");
+	}
 }
 
 String WebSocketClient::generateKey() {
@@ -55,8 +72,10 @@ void WebSocketClient::write(const char *data) {
 }
 
 bool WebSocketClient::connect(String host, String path, int port) {
-    if (!client->connect(host.c_str(), port))
+    if (!client->connect(host.c_str(), port)) {
+		DEBUG_WS("[WS] WiFi client connection failed");
         return false;
+	}
 
 	// send handshake
 	String handshake = "GET " + path + " HTTP/1.1\r\n"

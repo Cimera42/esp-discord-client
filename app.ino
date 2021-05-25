@@ -1,33 +1,19 @@
+#include "config.h"
+
 #include <HardwareSerial.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <WiFiClientSecure.h>
-#include "GatewayIntents.h"
 #include "WebSocketClient.h"
 #include "libs/ArduinoJson.h"
 
-#define DEBUG
-#ifdef DEBUG
+
+#define DEBUG_APP
+#ifdef DEBUG_APP
 #define DEBUG_MSG Serial.println
 #else
 #define DEBUG_MSG(MSG)
 #endif
-
-/**
- * CONFIG
- */
-#define wifi_ssid ""
-#define wifi_password ""
-
-const String bot_token = "";
-// Intent options can be found in GatewayIntents.h
-const uint16_t gateway_intents = GUILD_MESSAGES_INTENT | GUILD_MESSAGE_TYPING_INTENT | GUILD_VOICE_STATES_INTENT;
-
-static const char* USER_ID = "132691466177871872";
-static const uint8_t LED_PIN = 5;
-/**
- * END CONFIG
- */
 
 void setup_wifi();
 
@@ -130,6 +116,7 @@ void loop()
     if (!ws.isConnected())
     {
         Serial.println("connecting");
+        ws.setSecureFingerprint(certificateFingerprint);
         // It technically should fetch url from discord.com/api/gateway
         ws.connect("gateway.discord.gg", "/?v=8&encoding=json", 443);
     }
@@ -229,13 +216,15 @@ void loop()
 
                 if(hasWsSession)
                 {
-                    DEBUG_MSG("Send:: {\"op\":6,\"d\":{\"token\":\"" + bot_token + "\",\"session_id\":\"" + websocketSessionId + "\",\"seq\":\"" + String(lastWebsocketSequence, 10) + "\"}}");
-                    ws.send("{\"op\":6,\"d\":{\"token\":\"" + bot_token + "\",\"session_id\":\"" + websocketSessionId + "\",\"seq\":\"" + String(lastWebsocketSequence, 10) + "\"}}");
+                    String msg = "{\"op\":6,\"d\":{\"token\":\"" + String(bot_token) + "\",\"session_id\":\"" + websocketSessionId + "\",\"seq\":\"" + String(lastWebsocketSequence, 10) + "\"}}";
+                    DEBUG_MSG("Send:: " + msg);
+                    ws.send(msg);
                 }
                 else
                 {
-                    DEBUG_MSG("Send:: {\"op\":2,\"d\":{\"token\":\"" + bot_token + "\",\"intents\":" + gateway_intents + ",\"properties\":{\"$os\":\"linux\",\"$browser\":\"ESP8266\",\"$device\":\"ESP8266\"},\"compress\":false,\"large_threshold\":250}}");
-                    ws.send("{\"op\":2,\"d\":{\"token\":\"" + bot_token + "\",\"intents\":" + gateway_intents + ",\"properties\":{\"$os\":\"linux\",\"$browser\":\"ESP8266\",\"$device\":\"ESP8266\"},\"compress\":false,\"large_threshold\":250}}");
+                    String msg = "{\"op\":2,\"d\":{\"token\":\"" + String(bot_token) + "\",\"intents\":" + gateway_intents + ",\"properties\":{\"$os\":\"linux\",\"$browser\":\"ESP8266\",\"$device\":\"ESP8266\"},\"compress\":false,\"large_threshold\":250}}";
+                    DEBUG_MSG("Send:: " + msg);
+                    ws.send(msg);
                 }
 
                 lastHeartbeatSend = now;
