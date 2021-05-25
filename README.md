@@ -73,6 +73,9 @@ Some custom modifications:
 ### [ArduinoJson](https://github.com/bblanchon/ArduinoJson)
 Used to decode JSON payloads from Discord.
 
+### [ESP8266 Arduino core - v2.7.4](https://github.com/esp8266/Arduino/releases/tag/2.7.4)
+Arduino core for ESP8266 WiFi chip
+
 ## Other Resources
 
 Based on https://github.com/Cimera42/DiscordBot
