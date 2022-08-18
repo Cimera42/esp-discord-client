@@ -1,22 +1,16 @@
-# This is a basic workflow to help you get started with Actions
+name: Update Secure Fingerprint
 
-name: CI
-
-# Controls when the workflow will run
 on:
   push:
+  schedule:
+    - cron: '0 0 1 * *'
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  update:
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
 
       - name: Fetch fingerprint
@@ -25,7 +19,7 @@ jobs:
           echo "FINGERPRINT=$FINGERPRINT" >> $GITHUB_ENV
 
       - name: Replace fingerprint in config
-        run: sed -i "s/\(\/\*FINGERPRINT>>\*\/\)\"[a-zA-Z0-9 ]\{59\}\"\(\/\*<<FINGERPRINT\*\/\)/\1\"$FINGERPRINT\"\2/" config.h
+        run: sed -i "s/\(\/\*FINGERPRINT>>\*\/\)\"[a-zA-Z0-9 ]\{59\}\"\(\/\*<<FINGERPRINT\*\/\)/\1\"abcdefghijk$FINGERPRINT\"\2/" config.h
 
       - name: Check status
         run: echo "DIRTY=$(git status --porcelain)" >> $GITHUB_ENV
@@ -41,4 +35,8 @@ jobs:
           git add config.h
           git commit -m "$DATETIME: Update gateway.discord.gg fingerprint"
           git push -u origin HEAD
+
+      - name: Create pull request
+        if: ${{ env.DIRTY != '' }}
+        run: gh pr create --assignee Cimera42 --branch master --fill
 
