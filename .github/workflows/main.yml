@@ -1,4 +1,4 @@
-name: Update Secure Fingerprint
+name: Fingerprint
 
 on:
   push:
