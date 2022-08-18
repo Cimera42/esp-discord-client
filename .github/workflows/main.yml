@@ -31,7 +31,7 @@ jobs:
         run: echo "DIRTY=$(git status --porcelain)" >> $GITHUB_ENV
 
       - name: Branch and commit
-        if: ${{ env.DIRTY == '' }}
+        if: ${{ env.DIRTY != '' }}
         run: |
           git config user.email "tim.m.porritt@gmail.com"
           git config user.name "GitHub Actions"
