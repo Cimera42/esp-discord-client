@@ -19,7 +19,7 @@ jobs:
           echo "FINGERPRINT=$FINGERPRINT" >> $GITHUB_ENV
 
       - name: Replace fingerprint in config
-        run: sed -i "s/\(\/\*FINGERPRINT>>\*\/\)\"[a-zA-Z0-9 ]\{59\}\"\(\/\*<<FINGERPRINT\*\/\)/\1\"abcdefghijk$FINGERPRINT\"\2/" config.h
+        run: sed -i "s/\(\/\*FINGERPRINT>>\*\/\)\"[a-zA-Z0-9 ]\{59\}\"\(\/\*<<FINGERPRINT\*\/\)/\1\"$FINGERPRINT\"\2/" config.h
 
       - name: Check status
         run: echo "DIRTY=$(git status --porcelain)" >> $GITHUB_ENV
