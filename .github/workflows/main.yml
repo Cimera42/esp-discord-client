@@ -1,0 +1,44 @@
+name: Fingerprint
+
+on:
+  schedule:
+    - cron: '0 0 1 * *'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Fetch fingerprint
+        run: |
+          FINGERPRINT="$(openssl s_client -connect gateway.discord.gg:443 < /dev/null 2>/dev/null | openssl x509 -fingerprint -noout -in /dev/stdin | sed 's/^SHA1 Fingerprint=//g' | sed 's/:/ /g' | tr '[:upper:]' '[:lower:]')"
+          echo "FINGERPRINT=$FINGERPRINT" >> $GITHUB_ENV
+
+      - name: Replace fingerprint in config
+        run: sed -i "s/\(\/\*FINGERPRINT>>\*\/\)\"[a-zA-Z0-9 ]\{59\}\"\(\/\*<<FINGERPRINT\*\/\)/\1\"$FINGERPRINT\"\2/" config.h
+
+      - name: Check status
+        run: echo "DIRTY=$(git status --porcelain)" >> $GITHUB_ENV
+
+      - name: Branch and commit
+        if: ${{ env.DIRTY != '' }}
+        run: |
+          git config user.email "tim.m.porritt@gmail.com"
+          git config user.name "GitHub Actions"
+
+          DATETIME="$(date +%Y%m%d_%H%M%S)"
+          git checkout -b update/$DATETIME-update-fingerprint
+          git add config.h
+          git commit -m "$DATETIME: Update gateway.discord.gg ssl fingerprint"
+          git push -u origin HEAD
+
+      - name: Create pull request
+        if: ${{ env.DIRTY != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create --assignee Cimera42 --base master --title 'Update SSL Fingerprint' --body 'Update gateway.discord.gg ssl fingerprint'
+
