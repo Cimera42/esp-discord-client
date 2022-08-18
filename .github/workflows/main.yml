@@ -38,6 +38,8 @@ jobs:
 
       - name: Create pull request
         if: ${{ env.DIRTY != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh pr create --assignee Cimera42 --base master --title 'Update SSL Fingerprint' --body 'Update gateway.discord.gg ssl fingerprint'
 
