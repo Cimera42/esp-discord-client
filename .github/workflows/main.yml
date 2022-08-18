@@ -28,15 +28,17 @@ jobs:
         run: sed -i "s/\(\/\*FINGERPRINT>>\*\/\)\"[a-zA-Z0-9 ]\{59\}\"\(\/\*<<FINGERPRINT\*\/\)/\1\"_$FINGERPRINT_\"\2/" config.h
 
       - name: Check status
-        run: git status
+        run: echo "DIRTY=$(git status --porcelain)" >> $GITHUB_ENV
 
       - name: Branch and commit
+        if: ${{ env.DIRTY == '' }}
         run: |
-          if [[ -n "$(git status --porcelain)" ]]; then
-            DATETIME="$(date +%Y%m%d_%H%M%S)"
-            git checkout -b update/$DATETIME-update-fingerprint
-            git add config.h
-            git commit -m "$DATETIME: Update gateway.discord.gg fingerprint"
-            git push -u origin HEAD
-          fi
+          git config user.email "tim.m.porritt@gmail.com"
+          git config user.name "GitHub Actions"
+
+          DATETIME="$(date +%Y%m%d_%H%M%S)"
+          git checkout -b update/$DATETIME-update-fingerprint
+          git add config.h
+          git commit -m "$DATETIME: Update gateway.discord.gg fingerprint"
+          git push -u origin HEAD
 
