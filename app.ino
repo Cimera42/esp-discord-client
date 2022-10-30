@@ -31,6 +31,13 @@ String websocketSessionId;
 bool hasReceivedWSSequence = false;
 unsigned long lastWebsocketSequence = 0;
 
+const char *op = "op";
+
+#ifdef DEBUG_APP
+const char *debugSendPrefix = "Send:: ";
+#endif
+
+
 void setup()
 {
     Serial.begin(115200);
@@ -46,7 +53,7 @@ void setup_wifi()
 {
     // We start by connecting to a WiFi network
     Serial.println();
-    Serial.print("Connecting to ");
+    Serial.print(F("Connecting to "));
     Serial.println(wifi_ssid);
 
     WiFi.begin(wifi_ssid, wifi_password);
@@ -54,12 +61,12 @@ void setup_wifi()
     while (WiFi.status() != WL_CONNECTED)
     {
         delay(500);
-        Serial.print(".");
+        Serial.print(F("."));
     }
 
-    Serial.println("");
-    Serial.println("WiFi connected");
-    Serial.println("IP address: ");
+    Serial.println(F(""));
+    Serial.println(F("WiFi connected"));
+    Serial.println(F("IP address: "));
     Serial.println(WiFi.localIP());
 }
 
@@ -115,10 +122,10 @@ void loop()
 
     if (!ws.isConnected())
     {
-        Serial.println("connecting");
+        Serial.println(F("connecting"));
         ws.setSecureFingerprint(certificateFingerprint);
         // It technically should fetch url from discord.com/api/gateway
-        ws.connect("gateway.discord.gg", "/?v=8&encoding=json", 443);
+        ws.connect(F("gateway.discord.gg"), F("/?v=8&encoding=json"), 443);
     }
     else
     {
@@ -129,19 +136,21 @@ void loop()
             {
                 if (hasReceivedWSSequence)
                 {
-                    DEBUG_MSG("Send:: {\"op\":1,\"d\":" + String(lastWebsocketSequence, 10) + "}");
-                    ws.send("{\"op\":1,\"d\":" + String(lastWebsocketSequence, 10) + "}");
+                    String msg = F("{\"op\":1,\"d\":") + String(lastWebsocketSequence, 10) + "}";
+                    DEBUG_MSG(debugSendPrefix + msg);
+                    ws.send(msg);
                 }
                 else
                 {
-                    DEBUG_MSG("Send:: {\"op\":1,\"d\":null}");
-                    ws.send("{\"op\":1,\"d\":null}");
+                    String msg = F("{\"op\":1,\"d\":null}");
+                    DEBUG_MSG(debugSendPrefix + msg);
+                    ws.send(msg);
                 }
                 lastHeartbeatSend = now;
             }
             if (lastHeartbeatAck > lastHeartbeatSend + (heartbeatInterval / 2))
             {
-                DEBUG_MSG("Heartbeat ack timeout");
+                DEBUG_MSG(F("Heartbeat ack timeout"));
                 ws.disconnect();
                 heartbeatInterval = 0;
             }
@@ -154,54 +163,54 @@ void loop()
             DeserializationError err = deserializeJson(doc, msg);
             if (err)
             {
-                Serial.print("deserializeJson() failed with code ");
-                Serial.println(err.c_str());
+                Serial.print(F("deserializeJson() failed with code "));
+                Serial.println(err.f_str());
                 if (err == DeserializationError::NoMemory)
                 {
-                    Serial.println("Try increasing DynamicJsonDocument size");
+                    Serial.println(F("Try increasing DynamicJsonDocument size"));
                 }
             }
             else
             {
                 // TODO Should maintain heartbeat
-                if (doc["op"] == 0) // Message
+                if (doc[op] == 0) // Message
                 {
-                    if (doc.containsKey("s"))
+                    if (doc.containsKey(F("s")))
                     {
-                        lastWebsocketSequence = doc["s"];
+                        lastWebsocketSequence = doc[F("s")];
                         hasReceivedWSSequence = true;
                     }
 
-                    if (doc["t"] == "READY")
+                    if (doc[F("t")] == "READY")
                     {
-                        websocketSessionId = doc["d"]["session_id"].as<String>();
+                        websocketSessionId = doc[F("d")][F("session_id")].as<String>();
                         hasWsSession = true;
                     }
                 }
-                else if (doc["op"] == 9) // Connection invalid
+                else if (doc[op] == 9) // Connection invalid
                 {
                     ws.disconnect();
                     hasWsSession = false;
                     heartbeatInterval = 0;
                 }
-                else if (doc["op"] == 11) // Heartbeat ACK
+                else if (doc[op] == 11) // Heartbeat ACK
                 {
                     lastHeartbeatAck = now;
                 }
-                else if (doc["op"] == 10) // Start
+                else if (doc[op] == 10) // Start
                 {
-                    heartbeatInterval = doc["d"]["heartbeat_interval"];
+                    heartbeatInterval = doc[F("d")][F("heartbeat_interval")];
 
                     if (hasWsSession)
                     {
-                        String msg = "{\"op\":6,\"d\":{\"token\":\"" + String(bot_token) + "\",\"session_id\":\"" + websocketSessionId + "\",\"seq\":\"" + String(lastWebsocketSequence, 10) + "\"}}";
-                        DEBUG_MSG("Send:: " + msg);
+                        String msg = F("{\"op\":6,\"d\":{\"token\":\"") + String(bot_token) + F("\",\"session_id\":\"") + websocketSessionId + F("\",\"seq\":\"") + String(lastWebsocketSequence, 10) + F("\"}}");
+                        DEBUG_MSG(debugSendPrefix + msg);
                         ws.send(msg);
                     }
                     else
                     {
-                        String msg = "{\"op\":2,\"d\":{\"token\":\"" + String(bot_token) + "\",\"intents\":" + gateway_intents + ",\"properties\":{\"$os\":\"linux\",\"$browser\":\"ESP8266\",\"$device\":\"ESP8266\"},\"compress\":false,\"large_threshold\":250}}";
-                        DEBUG_MSG("Send:: " + msg);
+                        String msg = F("{\"op\":2,\"d\":{\"token\":\"") + String(bot_token) + F("\",\"intents\":") + gateway_intents + F(",\"properties\":{\"$os\":\"linux\",\"$browser\":\"ESP8266\",\"$device\":\"ESP8266\"},\"compress\":false,\"large_threshold\":250}}");
+                        DEBUG_MSG(debugSendPrefix + msg);
                         ws.send(msg);
                     }
 
