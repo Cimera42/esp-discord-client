@@ -7,7 +7,6 @@
 #include "WebSocketClient.h"
 #include "libs/ArduinoJson.h"
 
-
 #define DEBUG_APP
 #ifdef DEBUG_APP
 #define DEBUG_MSG Serial.println
@@ -21,7 +20,7 @@ WebSocketClient ws(true);
 DynamicJsonDocument doc(1024);
 
 const char *host = "discord.com";
-const int httpsPort = 443;  //HTTPS= 443 and HTTP = 80
+const int httpsPort = 443; // HTTPS= 443 and HTTP = 80
 
 unsigned long heartbeatInterval = 0;
 unsigned long lastHeartbeatAck = 0;
@@ -35,12 +34,16 @@ unsigned long lastWebsocketSequence = 0;
 void setup()
 {
     Serial.begin(115200);
+    while (!Serial)
+    {
+        ; // wait for serial port to connect. Needed for native USB
+    }
 
     setup_wifi();
 }
 
-void setup_wifi() {
-    delay(10);
+void setup_wifi()
+{
     // We start by connecting to a WiFi network
     Serial.println();
     Serial.print("Connecting to ");
@@ -48,7 +51,8 @@ void setup_wifi() {
 
     WiFi.begin(wifi_ssid, wifi_password);
 
-    while (WiFi.status() != WL_CONNECTED) {
+    while (WiFi.status() != WL_CONNECTED)
+    {
         delay(500);
         Serial.print(".");
     }
@@ -119,11 +123,11 @@ void loop()
     else
     {
         unsigned long now = millis();
-        if(heartbeatInterval > 0)
+        if (heartbeatInterval > 0)
         {
-            if(now > lastHeartbeatSend + heartbeatInterval)
+            if (now > lastHeartbeatSend + heartbeatInterval)
             {
-                if(hasReceivedWSSequence)
+                if (hasReceivedWSSequence)
                 {
                     DEBUG_MSG("Send:: {\"op\":1,\"d\":" + String(lastWebsocketSequence, 10) + "}");
                     ws.send("{\"op\":1,\"d\":" + String(lastWebsocketSequence, 10) + "}");
@@ -135,7 +139,7 @@ void loop()
                 }
                 lastHeartbeatSend = now;
             }
-            if(lastHeartbeatAck > lastHeartbeatSend + (heartbeatInterval / 2))
+            if (lastHeartbeatAck > lastHeartbeatSend + (heartbeatInterval / 2))
             {
                 DEBUG_MSG("Heartbeat ack timeout");
                 ws.disconnect();
@@ -147,52 +151,63 @@ void loop()
         if (ws.getMessage(msg))
         {
             Serial.println(msg);
-            deserializeJson(doc, msg);
-
-            // TODO Should maintain heartbeat
-            if(doc["op"] == 0) // Message
+            DeserializationError err = deserializeJson(doc, msg);
+            if (err)
             {
-                if(doc.containsKey("s"))
+                Serial.print("deserializeJson() failed with code ");
+                Serial.println(err.c_str());
+                if (err == DeserializationError::NoMemory)
                 {
-                    lastWebsocketSequence = doc["s"];
-                    hasReceivedWSSequence = true;
-                }
-
-                if(doc["t"] == "READY")
-                {
-                    websocketSessionId = doc["d"]["session_id"].as<String>();
-                    hasWsSession = true;
+                    Serial.println("Try increasing DynamicJsonDocument size");
                 }
             }
-            else if(doc["op"] == 9) // Connection invalid
+            else
             {
-                ws.disconnect();
-                hasWsSession = false;
-                heartbeatInterval = 0;
-            }
-            else if(doc["op"] == 11) // Heartbeat ACK
-            {
-                lastHeartbeatAck = now;
-            }
-            else if(doc["op"] == 10) // Start
-            {
-                heartbeatInterval = doc["d"]["heartbeat_interval"];
-
-                if(hasWsSession)
+                // TODO Should maintain heartbeat
+                if (doc["op"] == 0) // Message
                 {
-                    String msg = "{\"op\":6,\"d\":{\"token\":\"" + String(bot_token) + "\",\"session_id\":\"" + websocketSessionId + "\",\"seq\":\"" + String(lastWebsocketSequence, 10) + "\"}}";
-                    DEBUG_MSG("Send:: " + msg);
-                    ws.send(msg);
-                }
-                else
-                {
-                    String msg = "{\"op\":2,\"d\":{\"token\":\"" + String(bot_token) + "\",\"intents\":" + gateway_intents + ",\"properties\":{\"$os\":\"linux\",\"$browser\":\"ESP8266\",\"$device\":\"ESP8266\"},\"compress\":false,\"large_threshold\":250}}";
-                    DEBUG_MSG("Send:: " + msg);
-                    ws.send(msg);
-                }
+                    if (doc.containsKey("s"))
+                    {
+                        lastWebsocketSequence = doc["s"];
+                        hasReceivedWSSequence = true;
+                    }
 
-                lastHeartbeatSend = now;
-                lastHeartbeatAck = now;
+                    if (doc["t"] == "READY")
+                    {
+                        websocketSessionId = doc["d"]["session_id"].as<String>();
+                        hasWsSession = true;
+                    }
+                }
+                else if (doc["op"] == 9) // Connection invalid
+                {
+                    ws.disconnect();
+                    hasWsSession = false;
+                    heartbeatInterval = 0;
+                }
+                else if (doc["op"] == 11) // Heartbeat ACK
+                {
+                    lastHeartbeatAck = now;
+                }
+                else if (doc["op"] == 10) // Start
+                {
+                    heartbeatInterval = doc["d"]["heartbeat_interval"];
+
+                    if (hasWsSession)
+                    {
+                        String msg = "{\"op\":6,\"d\":{\"token\":\"" + String(bot_token) + "\",\"session_id\":\"" + websocketSessionId + "\",\"seq\":\"" + String(lastWebsocketSequence, 10) + "\"}}";
+                        DEBUG_MSG("Send:: " + msg);
+                        ws.send(msg);
+                    }
+                    else
+                    {
+                        String msg = "{\"op\":2,\"d\":{\"token\":\"" + String(bot_token) + "\",\"intents\":" + gateway_intents + ",\"properties\":{\"$os\":\"linux\",\"$browser\":\"ESP8266\",\"$device\":\"ESP8266\"},\"compress\":false,\"large_threshold\":250}}";
+                        DEBUG_MSG("Send:: " + msg);
+                        ws.send(msg);
+                    }
+
+                    lastHeartbeatSend = now;
+                    lastHeartbeatAck = now;
+                }
             }
         }
     }
