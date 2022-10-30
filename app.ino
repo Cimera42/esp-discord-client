@@ -17,7 +17,7 @@
 void setup_wifi();
 
 WebSocketClient ws(true);
-DynamicJsonDocument doc(1024);
+DynamicJsonDocument doc(4096);
 
 const char *host = "discord.com";
 const int httpsPort = 443; // HTTPS= 443 and HTTP = 80
